@@ -1,0 +1,23 @@
+{
+  "name": "playwright_session1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tests": "playwright test ",
+    "report": "allure generate allure-results -o allure-report --clean & allure open allure-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.43.1",
+    "@types/node": "^20.12.2",
+    "allure-commandline": "^2.22.0",
+    "allure-playwright": "^2.15.1"
+  },
+  "dependencies": {
+    "-": "^0.0.1",
+    "D": "^1.0.0"
+  }
+}
