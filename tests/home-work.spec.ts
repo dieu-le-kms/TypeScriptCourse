@@ -1,5 +1,6 @@
 
 import { Locator, expect, test } from '@playwright/test';
+import { log } from 'console';
 
 test('Verify user can create an order @homework', async ({ page }) => {
   const productName = 'iPhone 13 PRO';
@@ -71,24 +72,81 @@ test.describe('Login feature tests', () => {
   let loginButton: Locator;
   let requiredUserNameErrorLabel: Locator;
   let requiredPasswordErrorLabel: Locator;
+  let adminMenu: Locator;
+  let addNewUserButton: Locator;
+  let userNameInput: Locator;
+  let passwordInput: Locator;
+  let confirmPassInput: Locator;
+  let userRoleInput: Locator;
+  let statusInput: Locator;
+  let employeeNameInput: Locator;
+  let saveButton: Locator;
+  let firstEmployeeOption: Locator;
+  let userMenu: Locator;
+  let logoutButton: Locator;
+
+  const rootUserName = 'Admin';
+  const rootPassword = 'admin123';
+
+  const newUser = `myNewUserTest${Date.now()}`;
+  const newUserPassword = 'loremipsum123';
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://opensource-demo.orangehrmlive.com/');
     userEmailLocator = page.getByRole('textbox', { name: 'Username' });
     userPasswordLocator = page.getByRole('textbox', { name: 'Password' });
     loginButton = page.getByRole('button', { name: 'Login' });
     requiredUserNameErrorLabel = page.locator(`//div[.//input[@name='username']]/following-sibling::span[text()='Required']`);
     requiredPasswordErrorLabel = page.locator(`//div[.//input[@name='password']]/following-sibling::span[text()='Required']`);
+    adminMenu = page.getByRole('link', { name: 'Admin' });
+    addNewUserButton = page.locator(`//button[contains(.,'Add')]`);
+    userNameInput = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='Username']]/following-sibling::div//input`);
+    passwordInput = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='Password']]/following-sibling::div//input`);
+    confirmPassInput = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='Confirm Password']]/following-sibling::div//input`);
+    userRoleInput = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='User Role']]/following-sibling::div//div[contains(@class,'select-text--active')]`);
+    statusInput = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='Status']]/following-sibling::div//div[contains(@class,'select-text--active')]`);
+    employeeNameInput = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='Employee Name']]/following-sibling::div//input`);
+    firstEmployeeOption = page.locator(`//div[contains(@class,'oxd-input-group') and .//label[text()='Employee Name']]/following-sibling::div`).getByRole('option').first();
+    saveButton = page.getByRole('button', { name: 'Save' });
+
+    userMenu = page.locator(`.oxd-userdropdown`);
+    logoutButton = page.getByRole('menuitem', { name: 'Logout' });
+
+    //login to system with root user and create a new user
+    await page.goto('https://opensource-demo.orangehrmlive.com/');
+    await userEmailLocator.fill(rootUserName);
+    await userPasswordLocator.fill(rootPassword);
+    await loginButton.click();
+    await expect(page).toHaveURL(/.*dashboard/);
+    await adminMenu.click();
+    await addNewUserButton.click();
+    await userRoleInput.click();
+
+    await page.getByRole('option', { name: 'Admin' }).click();
+    await employeeNameInput.fill('a');
+    await page.waitForTimeout(2000);
+    await firstEmployeeOption.click();
+    await statusInput.click();
+    await page.getByRole('option', { name: 'Enabled' }).click();
+    await userNameInput.fill(newUser);
+    await passwordInput.fill(newUserPassword);
+    await confirmPassInput.fill(newUserPassword);
+    await saveButton.click();
+
+    const res = await page.waitForResponse(resp => resp.url().includes('/user') && resp.request().method() === 'POST');
+    expect(res.status()).toBe(200);
+
+    await userMenu.click();
+    await logoutButton.click();
   });
 
   test('Login with valid credential @homework', async ({ page }) => {
-    await userEmailLocator.fill('Admin');
-    await userPasswordLocator.fill('admin123');
+    await userEmailLocator.fill(newUser);
+    await userPasswordLocator.fill(newUserPassword);
     await loginButton.click();
     await expect(page).toHaveURL(/.*dashboard/);
   });
 
-  test('Login with invalid credential', async ({ page }) => {
+  test('Login with invalid credential', async () => {
     await userPasswordLocator.fill('admin123');
     await loginButton.click();
     await expect(requiredUserNameErrorLabel).toBeVisible();
